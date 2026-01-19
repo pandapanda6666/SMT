@@ -60,8 +60,13 @@
 
     <div id="createGroupModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-[100] fade-in"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden"><div class="p-4 bg-blue-600 text-white flex justify-between items-center"><h3 class="text-lg font-bold">建立新群組</h3><button onclick="closeModal('createGroupModal')" class="hover:bg-white/20 p-1 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-sm font-bold text-slate-700 mb-2">名稱</label><input type="text" id="cg_name" class="w-full border p-2 rounded-lg"></div><div><label class="block text-sm font-bold text-slate-700 mb-2">模式</label><select id="cg_type" onchange="window.resetCGMembers()" class="w-full border p-2 rounded-lg bg-slate-50"><option value="Family">家庭模式</option><option value="Class">教室模式</option></select></div></div><div id="cg_memberList" class="space-y-3"></div><button onclick="window.addCGMemberRow()" class="text-xs text-blue-600 flex items-center gap-1 font-bold"><i data-lucide="plus" class="w-3 h-3"></i> 增加成員欄位</button></div><div class="p-4 border-t bg-slate-50 flex gap-3"><button onclick="closeModal('createGroupModal')" class="flex-1 py-2 bg-white border rounded-lg font-bold">取消</button><button onclick="window.doCreateGroup()" class="flex-1 py-2 bg-blue-600 text-white rounded-lg font-bold">確認建立</button></div></div></div>
 
+    <!-- 新增成員彈窗 -->
     <div id="addMemberModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-[100] fade-in"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"><div class="p-4 bg-green-600 text-white flex justify-between items-center"><h3 class="text-lg font-bold">新增群組成員</h3><button onclick="closeModal('addMemberModal')" class="hover:bg-white/20 p-1 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="p-6 space-y-4" id="am_body"></div><div class="p-4 border-t bg-slate-50 flex gap-3"><button onclick="closeModal('addMemberModal')" class="flex-1 py-2 bg-white border rounded-lg font-bold">取消</button><button onclick="window.doAddMember()" class="flex-1 py-2 bg-green-600 text-white rounded-lg font-bold shadow-lg">確認新增</button></div></div></div>
 
+    <!-- 編輯成員彈窗 -->
+    <div id="editMemberModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-[100] fade-in"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"><div class="p-4 bg-blue-600 text-white flex justify-between items-center"><h3 class="text-lg font-bold">編輯成員資料</h3><button onclick="closeModal('editMemberModal')" class="hover:bg-white/20 p-1 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="p-6 space-y-4" id="em_body"></div><div class="p-4 border-t bg-slate-50 flex gap-3"><button onclick="closeModal('editMemberModal')" class="flex-1 py-2 bg-white border rounded-lg font-bold">取消</button><button onclick="window.doEditMember()" class="flex-1 py-2 bg-blue-600 text-white rounded-lg font-bold shadow-lg">儲存修改</button></div></div></div>
+
+    <!-- 獎懲操作彈窗 -->
     <div id="actionModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-[100] fade-in"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"><div id="modalHeader" class="p-4 text-white flex justify-between items-center"><h3 id="modalTitle" class="text-lg font-bold">標題</h3><button onclick="closeModal('actionModal')" class="hover:bg-white/20 p-1 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button></div><div id="modalBody" class="p-6"></div></div></div>
 
     <div id="confirmModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-[100] fade-in"><div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden p-6 text-center"><h3 id="confirmTitle" class="text-lg font-bold text-red-600 mb-2">確認</h3><div id="confirmMessage" class="text-slate-600 mb-6 text-sm"></div><div id="confirmActions" class="flex gap-3"></div></div></div>
@@ -77,7 +82,7 @@
         let currentUser = localStorage.getItem('award_username') || null;
         let groups = []; let currentGroupData = null; let currentStudentId = null, currentModalType = 'reward', currentScoreValue = 1;
 
-        const DEFAULT_REASONS = { Family: { reward: ['幫忙家事', '乖乖吃飯', '準時睡覺', '禮貌待人', '自理能力佳'], punish: ['吵鬧不休', '不收玩具', '挑食', '態度不佳', '沒寫功課'] }, Class: { reward: ['表現優異', '作業準時', '熱心助人', '進步顯著', '打掃認真'], punish: ['遲到早退', '未交作業', '秩序不佳', '忘記帶東西', '態度不佳'] } };
+        const DEFAULT_REASONS = { Family: { reward: ['幫忙家事', '乖乖吃飯', '準時睡覺', '禮貌待人', '自理能力佳'], punish: ['吵鬧不休', '不收玩具', '挑食偏食', '態度不佳', '沒寫功課'] }, Class: { reward: ['表現優異', '作業準時', '熱心助人', '進步顯著', '打掃認真'], punish: ['遲到早退', '未交作業', '秩序不佳', '忘記帶東西', '態度不佳'] } };
 
         window.addEventListener('DOMContentLoaded', async () => { await signInAnonymously(auth); if (currentUser) { document.body.classList.add('is-logged-in'); initApp(); } lucide.createIcons(); });
 
@@ -127,7 +132,13 @@
             [...members].sort((a,b)=>b.score-a.score).forEach((p,i)=>{
                 const isMe = p.username === currentUser; const div = document.createElement('div'); div.className = `relative rounded-xl border p-5 flex flex-col items-center fade-in shadow-sm ${isMe ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-400' : 'bg-white border-slate-200'}`;
                 let info = p.info1 + (currentGroupData.type === 'Class' && p.info1 === '學生' && p.info2 ? ` (${p.info2})` : '');
-                div.innerHTML = `<div class="w-full flex justify-between mb-2"><span class="text-[10px] text-slate-400 font-bold uppercase">#${i+1} ${info}</span><button onclick="window.requestConfirm('delete', '${p.id}', '${p.name}')" class="admin-only-inline text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center font-bold mb-1 text-slate-600 text-xl">${p.name[0]}</div><h3 class="font-bold text-lg">${p.name}</h3><div class="text-[10px] text-slate-400 mb-2 truncate max-w-full">${p.username || '未綁定'} ${isMe ? '⭐' : ''}</div><div class="text-3xl font-black my-3 ${p.score >= 0 ? 'text-green-600' : 'text-red-600'}">${p.score > 0 ? '+'+p.score : p.score}</div><div class="admin-only gap-2 w-full mt-1"><button onclick="window.openActionModal('${p.id}', 'punish')" class="flex-1 py-1.5 px-2 bg-red-50 text-red-600 rounded border border-red-100 text-xs font-bold hover:bg-red-100">扣分</button><button onclick="window.openActionModal('${p.id}', 'reward')" class="flex-1 py-1.5 px-2 bg-green-50 text-green-600 rounded border border-green-100 text-xs font-bold hover:bg-green-100">加分</button></div>`;
+                div.innerHTML = `<div class="w-full flex justify-between mb-2">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase">#${i+1} ${info}</span>
+                    <div class="flex gap-1">
+                        <button onclick="window.openEditMemberModal('${p.id}')" class="admin-only-inline text-slate-300 hover:text-blue-500 transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                        <button onclick="window.requestConfirm('delete', '${p.id}', '${p.name}')" class="admin-only-inline text-slate-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </div><div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center font-bold mb-1 text-slate-600 text-xl">${p.name[0]}</div><h3 class="font-bold text-lg">${p.name}</h3><div class="text-[10px] text-slate-400 mb-2 truncate max-w-full">${p.username || '未綁定'} ${isMe ? '⭐' : ''}</div><div class="text-3xl font-black my-3 ${p.score >= 0 ? 'text-green-600' : 'text-red-600'}">${p.score > 0 ? '+'+p.score : p.score}</div><div class="admin-only gap-2 w-full mt-1"><button onclick="window.openActionModal('${p.id}', 'punish')" class="flex-1 py-1.5 px-2 bg-red-50 text-red-600 rounded border border-red-100 text-xs font-bold hover:bg-red-100">扣分</button><button onclick="window.openActionModal('${p.id}', 'reward')" class="flex-1 py-1.5 px-2 bg-green-50 text-green-600 rounded border border-green-100 text-xs font-bold hover:bg-green-100">加分</button></div>`;
                 container.appendChild(div);
             }); lucide.createIcons();
         }
@@ -146,6 +157,63 @@
             if (u) { if (r === 'Admin') { if(!admins.includes(u)) admins.push(u); } else { if(!viewers.includes(u)) viewers.push(u); } }
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'groups', currentGroupData.id), { members: updated, admins, viewers });
             closeModal('addMemberModal'); loadGroupData(currentGroupData.id);
+        };
+
+        // 編輯成員邏輯
+        window.openEditMemberModal = (memberId) => {
+            const member = currentGroupData.members.find(m => m.id === memberId);
+            if (!member) return;
+            const mode = currentGroupData.type || 'Family';
+            const isAdmin = currentGroupData.admins && currentGroupData.admins.includes(member.username);
+            const roleValue = isAdmin ? 'Admin' : 'Viewer';
+
+            document.getElementById('em_body').innerHTML = `
+                <input type="hidden" id="em_id" value="${member.id}">
+                <div><label class="block text-sm font-bold text-slate-700 mb-1">姓名</label><input type="text" id="em_name" value="${member.name}" class="w-full border p-2 rounded-lg"></div>
+                <div><label class="block text-sm font-bold text-slate-700 mb-1">${mode==='Family'?'稱謂':'職位'}</label>
+                ${mode==='Family' ? `<input type="text" id="em_info1" value="${member.info1}" class="w-full border p-2 rounded-lg">` : 
+                `<select id="em_info1" onchange="window.toggleEmId(this)" class="w-full border p-2 rounded-lg"><option value="學生" ${member.info1==='學生'?'selected':''}>學生</option><option value="老師" ${member.info1==='老師'?'selected':''}>老師</option></select>`}</div>
+                <div id="em_id_container" style="display:${(mode==='Class' && member.info1==='學生')?'block':'none'}"><label class="block text-sm font-bold text-slate-700 mb-1">學號</label><input type="text" id="em_info2" value="${member.info2}" class="w-full border p-2 rounded-lg"></div>
+                <div><label class="block text-sm font-bold text-slate-700 mb-1">綁定帳號</label><input type="text" id="em_username" value="${member.username}" class="w-full border p-2 rounded-lg"></div>
+                <div><label class="block text-sm font-bold text-slate-700 mb-1">權限</label><select id="em_role" class="w-full border p-2 rounded-lg"><option value="Admin" ${roleValue==='Admin'?'selected':''}>管理者</option><option value="Viewer" ${roleValue==='Viewer'?'selected':''}>唯讀</option></select></div>`;
+            document.getElementById('editMemberModal').style.display = 'flex';
+        };
+        window.toggleEmId = (s) => document.getElementById('em_id_container').style.display = s.value==='學生'?'block':'none';
+        window.doEditMember = async () => {
+            const id = document.getElementById('em_id').value;
+            const n = document.getElementById('em_name').value.trim(); if (!n) return;
+            const u = document.getElementById('em_username').value.trim(); 
+            const r = document.getElementById('em_role').value;
+            const i1 = document.getElementById('em_info1').value;
+            const i2 = document.getElementById('em_info2') ? document.getElementById('em_info2').value.trim() : "";
+
+            const updatedMembers = currentGroupData.members.map(m => {
+                if (m.id === id) return { ...m, name: n, info1: i1, info2: i2, username: u };
+                return m;
+            });
+
+            // 重新計算管理員與查看者名單
+            let newAdmins = [currentUser]; // 創始管理者永遠保留
+            let newViewers = [];
+            updatedMembers.forEach(m => {
+                if (m.username && m.username !== currentUser) {
+                    if (m.id === id) { // 當前編輯的人
+                        if (r === 'Admin') newAdmins.push(m.username);
+                        else newViewers.push(m.username);
+                    } else { // 其他成員維持原樣
+                        const wasAdmin = currentGroupData.admins && currentGroupData.admins.includes(m.username);
+                        if (wasAdmin) newAdmins.push(m.username);
+                        else newViewers.push(m.username);
+                    }
+                }
+            });
+
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'groups', currentGroupData.id), { 
+                members: updatedMembers, 
+                admins: [...new Set(newAdmins)], 
+                viewers: [...new Set(newViewers)] 
+            });
+            closeModal('editMemberModal'); loadGroupData(currentGroupData.id);
         };
 
         window.openCreateGroupModal = () => { document.getElementById('cg_memberList').innerHTML = ''; document.getElementById('cg_name').value = ''; window.addCGMemberRow(); document.getElementById('createGroupModal').style.display = 'flex'; };
