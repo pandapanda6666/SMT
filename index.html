@@ -132,34 +132,90 @@
             [...members].sort((a,b)=>b.score-a.score).forEach((p,i)=>{
                 const isMe = p.username === currentUser; const div = document.createElement('div'); div.className = `relative rounded-xl border p-5 flex flex-col items-center fade-in shadow-sm ${isMe ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-400' : 'bg-white border-slate-200'}`;
                 let info = p.info1 + (currentGroupData.type === 'Class' && p.info1 === '學生' && p.info2 ? ` (${p.info2})` : '');
+                const hideButtons = (currentGroupData.type === 'Family' && p.hasButtons === false);
                 div.innerHTML = `<div class="w-full flex justify-between mb-2">
                     <span class="text-[10px] text-slate-400 font-bold uppercase">#${i+1} ${info}</span>
                     <div class="flex gap-1">
                         <button onclick="window.openEditMemberModal('${p.id}')" class="admin-only-inline text-slate-300 hover:text-blue-500 transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
                         <button onclick="window.requestConfirm('delete', '${p.id}', '${p.name}')" class="admin-only-inline text-slate-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
-                </div><div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center font-bold mb-1 text-slate-600 text-xl">${p.name[0]}</div><h3 class="font-bold text-lg">${p.name}</h3><div class="text-[10px] text-slate-400 mb-2 truncate max-w-full">${p.username || '未綁定'} ${isMe ? '⭐' : ''}</div><div class="text-3xl font-black my-3 ${p.score >= 0 ? 'text-green-600' : 'text-red-600'}">${p.score > 0 ? '+'+p.score : p.score}</div><div class="admin-only gap-2 w-full mt-1"><button onclick="window.openActionModal('${p.id}', 'punish')" class="flex-1 py-1.5 px-2 bg-red-50 text-red-600 rounded border border-red-100 text-xs font-bold hover:bg-red-100">扣分</button><button onclick="window.openActionModal('${p.id}', 'reward')" class="flex-1 py-1.5 px-2 bg-green-50 text-green-600 rounded border border-green-100 text-xs font-bold hover:bg-green-100">加分</button></div>`;
+                </div><div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center font-bold mb-1 text-slate-600 text-xl">${p.name[0]}</div><h3 class="font-bold text-lg">${p.name}</h3><div class="text-[10px] text-slate-400 mb-2 truncate max-w-full">${p.username || '未綁定'} ${isMe ? '⭐' : ''}</div><div class="text-3xl font-black my-3 ${p.score >= 0 ? 'text-green-600' : 'text-red-600'}">${p.score > 0 ? '+'+p.score : p.score}</div><div class="admin-only gap-2 w-full mt-1">
+                    ${!hideButtons ? `<button onclick="window.openActionModal('${p.id}', 'punish')" class="flex-1 py-1.5 px-2 bg-red-50 text-red-600 rounded border border-red-100 text-xs font-bold hover:bg-red-100">扣分</button><button onclick="window.openActionModal('${p.id}', 'reward')" class="flex-1 py-1.5 px-2 bg-green-50 text-green-600 rounded border border-green-100 text-xs font-bold hover:bg-green-100">加分</button>` : `<div class="text-[10px] text-slate-400 text-center w-full py-1.5 italic">不參與計分</div>`}
+                </div>`;
                 container.appendChild(div);
             }); lucide.createIcons();
         }
 
         window.openAddMemberModal = () => {
             const mode = currentGroupData.type || 'Family';
-            document.getElementById('am_body').innerHTML = `<div><label class="block text-sm font-bold text-slate-700 mb-1">姓名</label><input type="text" id="am_name" class="w-full border p-2 rounded-lg"></div><div><label class="block text-sm font-bold text-slate-700 mb-1">${mode==='Family'?'稱謂':'職位'}</label>${mode==='Family'?'<input type="text" id="am_info1" class="w-full border p-2 rounded-lg">':'<select id="am_info1" onchange="window.toggleAmId(this)" class="w-full border p-2 rounded-lg"><option value="學生">學生</option><option value="老師">老師</option></select>'}</div><div id="am_id_container" style="display:${mode==='Class'?'block':'none'}"><label class="block text-sm font-bold text-slate-700 mb-1">學號</label><input type="text" id="am_info2" class="w-full border p-2 rounded-lg"></div><div><label class="block text-sm font-bold text-slate-700 mb-1">綁定帳號</label><input type="text" id="am_username" class="w-full border p-2 rounded-lg"></div><div><label class="block text-sm font-bold text-slate-700 mb-1">權限</label><select id="am_role" class="w-full border p-2 rounded-lg"><option value="Admin">管理者</option><option value="Viewer">唯讀</option></select></div>`;
+            let info1Html = '';
+            if (mode === 'Family') {
+                info1Html = `<div><label class="block text-sm font-bold text-slate-700 mb-1">稱謂</label>
+                    <select id="am_title_select" onchange="window.handleTitleChange('am')" class="w-full border p-2 rounded-lg">
+                        <option value="爸爸">爸爸</option>
+                        <option value="媽媽">媽媽</option>
+                        <option value="兒子">兒子</option>
+                        <option value="女兒">女兒</option>
+                        <option value="家長">家長</option>
+                        <option value="自訂">自訂</option>
+                    </select>
+                </div>
+                <div id="am_custom_title_container" style="display:none"><label class="block text-sm font-bold text-slate-700 mb-1">自訂稱謂</label><input type="text" id="am_custom_title" class="w-full border p-2 rounded-lg"></div>
+                <div id="am_score_toggle_container" style="display:none" class="flex items-center gap-2 py-2"><input type="checkbox" id="am_has_buttons" checked><label class="text-sm font-bold text-slate-700">顯示加分按鈕</label></div>`;
+            } else {
+                info1Html = `<div><label class="block text-sm font-bold text-slate-700 mb-1">職位</label><select id="am_info1" onchange="window.toggleAmId(this)" class="w-full border p-2 rounded-lg"><option value="學生">學生</option><option value="老師">老師</option></select></div>`;
+            }
+
+            document.getElementById('am_body').innerHTML = `<div><label class="block text-sm font-bold text-slate-700 mb-1">姓名</label><input type="text" id="am_name" class="w-full border p-2 rounded-lg"></div>
+                ${info1Html}
+                <div id="am_id_container" style="display:${mode==='Class'?'block':'none'}"><label class="block text-sm font-bold text-slate-700 mb-1">學號</label><input type="text" id="am_info2" class="w-full border p-2 rounded-lg"></div>
+                <div><label class="block text-sm font-bold text-slate-700 mb-1">綁定帳號</label><input type="text" id="am_username" class="w-full border p-2 rounded-lg"></div>
+                <div><label class="block text-sm font-bold text-slate-700 mb-1">權限</label><select id="am_role" class="w-full border p-2 rounded-lg"><option value="Admin">管理者</option><option value="Viewer">唯讀</option></select></div>`;
             document.getElementById('addMemberModal').style.display = 'flex';
         };
+
+        window.handleTitleChange = (prefix) => {
+            const select = document.getElementById(`${prefix}_title_select`);
+            const customContainer = document.getElementById(`${prefix}_custom_title_container`);
+            const toggleContainer = document.getElementById(`${prefix}_score_toggle_container`);
+            if (select.value === '自訂') {
+                customContainer.style.display = 'block';
+                toggleContainer.style.display = 'flex';
+            } else {
+                customContainer.style.display = 'none';
+                toggleContainer.style.display = 'none';
+            }
+        };
+
         window.toggleAmId = (s) => document.getElementById('am_id_container').style.display = s.value==='學生'?'block':'none';
+        
         window.doAddMember = async () => {
             const n = document.getElementById('am_name').value.trim(); if (!n) return;
+            const mode = currentGroupData.type || 'Family';
+            let info1 = "";
+            let hasButtons = true;
+
+            if (mode === 'Family') {
+                const title = document.getElementById('am_title_select').value;
+                if (title === '自訂') {
+                    info1 = document.getElementById('am_custom_title').value.trim() || "成員";
+                    hasButtons = document.getElementById('am_has_buttons').checked;
+                } else {
+                    info1 = title;
+                    if (title === '家長') hasButtons = false;
+                }
+            } else {
+                info1 = document.getElementById('am_info1').value;
+            }
+
             const u = document.getElementById('am_username').value.trim(); const r = document.getElementById('am_role').value;
-            const updated = [...(currentGroupData.members||[]), { id: Date.now().toString(), name: n, info1: document.getElementById('am_info1').value, info2: document.getElementById('am_info2')?.value || "", score: 0, username: u }];
+            const updated = [...(currentGroupData.members||[]), { id: Date.now().toString(), name: n, info1: info1, info2: document.getElementById('am_info2')?.value || "", score: 0, username: u, hasButtons: hasButtons }];
             let admins = [...(currentGroupData.admins||[])], viewers = [...(currentGroupData.viewers||[])];
             if (u) { if (r === 'Admin') { if(!admins.includes(u)) admins.push(u); } else { if(!viewers.includes(u)) viewers.push(u); } }
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'groups', currentGroupData.id), { members: updated, admins, viewers });
             closeModal('addMemberModal'); loadGroupData(currentGroupData.id);
         };
 
-        // 編輯成員邏輯
         window.openEditMemberModal = (memberId) => {
             const member = currentGroupData.members.find(m => m.id === memberId);
             if (!member) return;
@@ -167,40 +223,76 @@
             const isAdmin = currentGroupData.admins && currentGroupData.admins.includes(member.username);
             const roleValue = isAdmin ? 'Admin' : 'Viewer';
 
+            let info1Html = '';
+            if (mode === 'Family') {
+                const presetTitles = ["爸爸", "媽媽", "兒子", "女兒", "家長"];
+                const isPreset = presetTitles.includes(member.info1);
+                info1Html = `<div><label class="block text-sm font-bold text-slate-700 mb-1">稱謂</label>
+                    <select id="em_title_select" onchange="window.handleTitleChange('em')" class="w-full border p-2 rounded-lg">
+                        <option value="爸爸" ${member.info1==='爸爸'?'selected':''}>爸爸</option>
+                        <option value="媽媽" ${member.info1==='媽媽'?'selected':''}>媽媽</option>
+                        <option value="兒子" ${member.info1==='兒子'?'selected':''}>兒子</option>
+                        <option value="女兒" ${member.info1==='女兒'?'selected':''}>女兒</option>
+                        <option value="家長" ${member.info1==='家長'?'selected':''}>家長</option>
+                        <option value="自訂" ${!isPreset?'selected':''}>自訂</option>
+                    </select>
+                </div>
+                <div id="em_custom_title_container" style="display:${!isPreset?'block':'none'}"><label class="block text-sm font-bold text-slate-700 mb-1">自訂稱謂</label><input type="text" id="em_custom_title" value="${!isPreset?member.info1:''}" class="w-full border p-2 rounded-lg"></div>
+                <div id="em_score_toggle_container" style="display:${!isPreset?'flex':'none'}" class="flex items-center gap-2 py-2"><input type="checkbox" id="em_has_buttons" ${member.hasButtons!==false?'checked':''}><label class="text-sm font-bold text-slate-700">顯示加分按鈕</label></div>`;
+            } else {
+                info1Html = `<div><label class="block text-sm font-bold text-slate-700 mb-1">職位</label><select id="em_info1" onchange="window.toggleEmId(this)" class="w-full border p-2 rounded-lg"><option value="學生" ${member.info1==='學生'?'selected':''}>學生</option><option value="老師" ${member.info1==='老師'?'selected':''}>老師</option></select></div>`;
+            }
+
             document.getElementById('em_body').innerHTML = `
                 <input type="hidden" id="em_id" value="${member.id}">
                 <div><label class="block text-sm font-bold text-slate-700 mb-1">姓名</label><input type="text" id="em_name" value="${member.name}" class="w-full border p-2 rounded-lg"></div>
-                <div><label class="block text-sm font-bold text-slate-700 mb-1">${mode==='Family'?'稱謂':'職位'}</label>
-                ${mode==='Family' ? `<input type="text" id="em_info1" value="${member.info1}" class="w-full border p-2 rounded-lg">` : 
-                `<select id="em_info1" onchange="window.toggleEmId(this)" class="w-full border p-2 rounded-lg"><option value="學生" ${member.info1==='學生'?'selected':''}>學生</option><option value="老師" ${member.info1==='老師'?'selected':''}>老師</option></select>`}</div>
+                ${info1Html}
                 <div id="em_id_container" style="display:${(mode==='Class' && member.info1==='學生')?'block':'none'}"><label class="block text-sm font-bold text-slate-700 mb-1">學號</label><input type="text" id="em_info2" value="${member.info2}" class="w-full border p-2 rounded-lg"></div>
                 <div><label class="block text-sm font-bold text-slate-700 mb-1">綁定帳號</label><input type="text" id="em_username" value="${member.username}" class="w-full border p-2 rounded-lg"></div>
                 <div><label class="block text-sm font-bold text-slate-700 mb-1">權限</label><select id="em_role" class="w-full border p-2 rounded-lg"><option value="Admin" ${roleValue==='Admin'?'selected':''}>管理者</option><option value="Viewer" ${roleValue==='Viewer'?'selected':''}>唯讀</option></select></div>`;
             document.getElementById('editMemberModal').style.display = 'flex';
         };
+
         window.toggleEmId = (s) => document.getElementById('em_id_container').style.display = s.value==='學生'?'block':'none';
+
         window.doEditMember = async () => {
             const id = document.getElementById('em_id').value;
             const n = document.getElementById('em_name').value.trim(); if (!n) return;
             const u = document.getElementById('em_username').value.trim(); 
             const r = document.getElementById('em_role').value;
-            const i1 = document.getElementById('em_info1').value;
+            const mode = currentGroupData.type || 'Family';
+            
+            let info1 = "";
+            let hasButtons = true;
+
+            if (mode === 'Family') {
+                const title = document.getElementById('em_title_select').value;
+                if (title === '自訂') {
+                    info1 = document.getElementById('em_custom_title').value.trim() || "成員";
+                    hasButtons = document.getElementById('em_has_buttons').checked;
+                } else {
+                    info1 = title;
+                    if (title === '家長') hasButtons = false;
+                }
+            } else {
+                info1 = document.getElementById('em_info1').value;
+            }
+
             const i2 = document.getElementById('em_info2') ? document.getElementById('em_info2').value.trim() : "";
 
             const updatedMembers = currentGroupData.members.map(m => {
-                if (m.id === id) return { ...m, name: n, info1: i1, info2: i2, username: u };
+                if (m.id === id) return { ...m, name: n, info1: info1, info2: i2, username: u, hasButtons: hasButtons };
                 return m;
             });
 
-            // 重新計算管理員與查看者名單
-            let newAdmins = [currentUser]; // 創始管理者永遠保留
+            let newAdmins = [currentUser];
             let newViewers = [];
             updatedMembers.forEach(m => {
                 if (m.username && m.username !== currentUser) {
-                    if (m.id === id) { // 當前編輯的人
+                    if (m.id === id) {
                         if (r === 'Admin') newAdmins.push(m.username);
                         else newViewers.push(m.username);
-                    } else { // 其他成員維持原樣
+                    } else {
                         const wasAdmin = currentGroupData.admins && currentGroupData.admins.includes(m.username);
                         if (wasAdmin) newAdmins.push(m.username);
                         else newViewers.push(m.username);
@@ -225,7 +317,7 @@
         window.resetCGMembers = () => { document.getElementById('cg_memberList').innerHTML = ''; window.addCGMemberRow(); };
         window.doCreateGroup = async () => {
             const name = document.getElementById('cg_name').value.trim(); if (!name) return;
-            const members = Array.from(document.querySelectorAll('.cg-member-row')).map(row => ({ id: Math.random().toString(36).substr(2, 9), name: row.querySelector('.member-name').value.trim(), info1: row.querySelector('.member-info1').value, info2: row.querySelector('.member-info2').value.trim(), score: 0, username: row.querySelector('.member-username').value.trim(), role: row.querySelector('.member-role').value })).filter(m => m.name);
+            const members = Array.from(document.querySelectorAll('.cg-member-row')).map(row => ({ id: Math.random().toString(36).substr(2, 9), name: row.querySelector('.member-name').value.trim(), info1: row.querySelector('.member-info1').value, info2: row.querySelector('.member-info2').value.trim(), score: 0, username: row.querySelector('.member-username').value.trim(), role: row.querySelector('.member-role').value, hasButtons: row.querySelector('.member-info1').value !== '家長' })).filter(m => m.name);
             const admins = [currentUser, ...members.filter(m => m.role === 'Admin' && m.username).map(m => m.username)];
             const viewers = members.filter(m => m.role === 'Viewer' && m.username).map(m => m.username);
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'groups'), { name, type: document.getElementById('cg_type').value, members, admins, viewers, createdAt: Date.now() });
